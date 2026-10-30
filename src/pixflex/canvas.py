@@ -56,6 +56,8 @@ class Canvas(Generic[A, K]):
         self.axes = axes
         self._fill = fill
         self._placed: dict[Node, tuple[int, int, int, int] | None] = {}
+        self._prepared: dict[Node, tuple[Any, tuple[int, int, int, int]]] = {}
+        self._compute_overlays()
         if _array is not None:  # sub-canvas / clone: adopt an existing buffer
             self._array = _array
             self._xp = be.namespace(_array)
@@ -196,6 +198,19 @@ class Canvas(Generic[A, K]):
         item = self.plan._resolve(k)
         if not isinstance(item, Slot):
             raise TypeError(f"{item.label} is a container; write to its slots (or use .sub())")
+        self._write(item, content, fit, align, alpha, convert, to_device)
+        self._restore_over(item)
+
+    def _write(
+        self,
+        item: Slot,
+        content: Any,
+        fit: str | None,
+        align: Align | None,
+        alpha: str | None,
+        convert: Callable[[Any], Any] | None,
+        to_device: bool,
+    ) -> None:
         rect = self.plan._rects[item]
         if convert is not None:
             content = convert(content)
@@ -228,6 +243,61 @@ class Canvas(Generic[A, K]):
         self._placed[item] = placed
         if oh and ow:
             self._array[self._idx(*placed)] = view
+        if item in self._covered:  # something is stacked above this slot: remember its pixels
+            self._prepared[item] = (view, placed)
+
+    # ------------------------------------------------------------------ stacking order
+    def _compute_overlays(self) -> None:
+        """Painter's algorithm: items later in tree order are drawn on top of earlier ones.
+
+        For every slot, find the later items with a background or content whose rectangles
+        overlap it; they are redrawn (clipped to the overlap) whenever the slot is written.
+        """
+        items, rects = self.plan._items, self.plan._rects
+        self._overlays: dict[Node, list[Node]] = {}
+        self._covered: set[Node] = set()
+        for i, s in enumerate(items):
+            rs = rects[s]
+            if not isinstance(s, Slot) or not (rs.h and rs.w):
+                continue
+            over = [
+                t
+                for t in items[i + 1 :]
+                if not (isinstance(t, Box) and t.background is None)
+                and (rt := rects[t]).h
+                and rt.w
+                and rt.y < rs.y1
+                and rs.y < rt.y1
+                and rt.x < rs.x1
+                and rs.x < rt.x1
+            ]
+            if over:
+                self._overlays[s] = over
+                self._covered.update(over)
+
+    def _restore_over(self, item: Node) -> None:
+        """Redraw whatever is stacked above ``item`` inside ``item``'s rectangle."""
+        rects = self.plan._rects
+        r = rects[item]
+        for t in self._overlays.get(item, ()):
+            rt = rects[t]
+            clip = (max(r.y, rt.y), min(r.y1, rt.y1), max(r.x, rt.x), min(r.x1, rt.x1))
+            prepared = self._prepared.get(t)
+            if prepared is None:
+                if t.background is not None:  # opaque container/slot without content
+                    self._fill_rect(clip, t.background)
+                continue
+            self._fill_rect(clip, self._effective_background(t))
+            view, (py0, py1, px0, px1) = prepared
+            y0, y1, x0, x1 = (
+                max(clip[0], py0),
+                min(clip[1], py1),
+                max(clip[2], px0),
+                min(clip[3], px1),
+            )
+            if y1 > y0 and x1 > x0:
+                part = view[self._src_idx(view.ndim, y0 - py0, y1 - py0, x0 - px0, x1 - px0)]
+                self._array[self._idx(y0, y1, x0, x1)] = part
 
     def _src_axes(self, ndim: int) -> str:
         return self.axes[len(self.axes) - ndim :]
@@ -327,9 +397,12 @@ class Canvas(Generic[A, K]):
         self._fill_rect((r.y, r.y1, r.x, r.x1), self._effective_background(item))
         for n in _subtree(item):
             self._placed.pop(n, None)
+            self._prepared.pop(n, None)
             if n.background is not None and n is not item:
                 rr = self.plan._rects[n]
                 self._fill_rect((rr.y, rr.y1, rr.x, rr.x1), n.background)
+        for n in _subtree(item):
+            self._restore_over(n)
 
     def sub(self, box: Node | K) -> Canvas[A, K]:
         """A canvas scoped to ``box``: its array is a view into this one; rects are box-relative."""
@@ -370,6 +443,10 @@ class Canvas(Generic[A, K]):
             self.plan, axes=self.axes, fill=self._fill, _array=be.copy(self._array)
         )
         twin._placed = dict(self._placed)
+        twin._prepared = {
+            n: (be.copy(v) if v is not None else v, placed)
+            for n, (v, placed) in self._prepared.items()
+        }
         return twin
 
     @property

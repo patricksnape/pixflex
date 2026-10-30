@@ -296,3 +296,93 @@ def test_slot_background_and_nested_painting(be):
     out = px(be, cv)
     assert (out[:4] == GREEN).all() and (out[4:] == BLUE).all()
     assert s.background == GREEN
+
+
+# ---------------------------------------------------------------- stacking (painter's algorithm)
+def overlay_layout(logo_first=False):
+    """A full-size video slot with a 20x10 logo slot absolutely positioned in its top-right."""
+
+    def make_logo():
+        return Slot(position="absolute", top=5, right=5, width=20, height=10, fit="exact")
+
+    with Column(width=100, height=60, background=BLUE) as root:
+        if logo_first:
+            logo, video = make_logo(), Slot(flex=1, fit="exact")
+        else:
+            video, logo = Slot(flex=1, fit="exact"), make_logo()
+    return root.solve(), video, logo
+
+
+def test_overlay_survives_updates_to_the_slot_below(be):
+    plan, video, logo = overlay_layout()
+    assert plan[logo].hw == (10, 20) and plan[logo].y == 5 and plan[logo].x == 75
+    cv = plan.canvas(be.arr(solid(1, 1, RED)), static={logo: be.arr(solid(10, 20, RED))})
+    for color in (GREEN, BLUE, GREEN):
+        cv[video] = be.arr(solid(60, 100, color))
+        out = px(be, cv)
+        assert (out[5:15, 75:95] == RED).all()  # logo still on top
+        assert (out[20:] == color).all() and (out[:5] == color).all()  # video around it
+
+
+@pytest.mark.parametrize("video_first", [True, False])
+def test_compose_ignores_dict_order(be, video_first):
+    plan, video, logo = overlay_layout()
+    v, lg = be.arr(solid(60, 100, GREEN)), be.arr(solid(10, 20, RED))
+    content = {video: v, logo: lg} if video_first else {logo: lg, video: v}
+    out = be.np(plan.compose(content, like=lg))
+    assert (out[5:15, 75:95] == RED).all() and (out[40:] == GREEN).all()
+
+
+def test_slot_declared_earlier_is_covered_by_the_one_after_it(be):
+    plan, video, logo = overlay_layout(logo_first=True)  # logo is *below* the video now
+    cv = plan.canvas(be.arr(solid(1, 1, RED)))
+    cv.update({logo: be.arr(solid(10, 20, RED)), video: be.arr(solid(60, 100, GREEN))})
+    assert (px(be, cv) == GREEN).all()
+
+
+def test_unwritten_overlay_slot_is_transparent(be):
+    plan, video, logo = overlay_layout()
+    cv = plan.canvas(be.arr(solid(1, 1, RED)))
+    cv[video] = be.arr(solid(60, 100, GREEN))
+    assert (px(be, cv) == GREEN).all()  # the empty logo slot must not erase the video
+
+
+def test_container_background_on_top_of_a_slot(be):
+    with Column(width=100, height=60, background=BLUE) as root:
+        under = Slot(flex=1, fit="exact")
+        with Row(position="absolute", bottom=0, width="100%", height=20, background=GREY):
+            icon = Slot(width=10, height=10, margin=5, fit="exact")
+    plan = root.solve()
+    cv = plan.canvas(be.arr(solid(1, 1, RED)))
+    cv.update({icon: be.arr(solid(10, 10, RED)), under: be.arr(solid(60, 100, GREEN))})
+    out = px(be, cv)
+    assert (out[:40] == GREEN).all()  # content above the bar
+    assert (out[40:, 0:5] == GREY).all() and (out[45:55, 5:15] == RED).all()  # bar + icon on top
+
+
+def test_letterbox_padding_of_the_overlay_is_restored(be):
+    plan, video, logo = overlay_layout()
+    cv = plan.canvas(be.arr(solid(1, 1, RED)))
+    cv.set(logo, be.arr(solid(5, 20, RED)), fit="contain")  # 4:1 into 20x10 -> bars of 2.5px
+    before = px(be, cv).copy()
+    cv[video] = be.arr(solid(60, 100, GREEN))
+    out = px(be, cv)
+    assert (out[5:15, 75:95] == before[5:15, 75:95]).all()
+
+
+def test_clear_redraws_what_is_above(be):
+    plan, video, logo = overlay_layout()
+    cv = plan.canvas(be.arr(solid(1, 1, RED)), static={logo: be.arr(solid(10, 20, RED))})
+    cv[video] = be.arr(solid(60, 100, GREEN))
+    cv.clear(video)
+    out = px(be, cv)
+    assert (out[5:15, 75:95] == RED).all() and (out[40:] == BLUE).all()
+
+
+def test_ring_buffers_keep_overlays(be):
+    plan, video, logo = overlay_layout()
+    cv = plan.canvas(be.arr(solid(1, 1, RED)), static={logo: be.arr(solid(10, 20, RED))})
+    a, b = next(r := cv.ring(2)), next(r)
+    a[video] = be.arr(solid(60, 100, GREEN))
+    b[video] = be.arr(solid(60, 100, BLUE))
+    assert (be.np(a.array)[5:15, 75:95] == RED).all() and (be.np(b.array)[5:15, 75:95] == RED).all()
