@@ -79,6 +79,7 @@ def main() -> None:
     out.mkdir(exist_ok=True)
 
     t_incremental = 0.0
+    plot_img = make_plot(0, plot_hw)
     with iio.imopen(out / "video_overlay.mp4", "w", plugin="pyav") as writer:
         writer.init_video_stream("libx264", fps=30)
         for t in range(FRAMES):

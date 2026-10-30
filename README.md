@@ -17,7 +17,7 @@ with Column(width=1280, height=720, background=(16, 16, 20)) as root:
     footer = Slot(height=40)
 
 plan = root.solve()  # no arrays involved
-plan[plot].hw  # (600, 314): render your plot at exactly this size
+plan[plot].hw  # (600, 318): render your plot at exactly this size
 img = plan.compose({title: t, video: frame, plot: p, footer: f})  # one allocation
 ```
 
