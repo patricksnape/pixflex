@@ -36,7 +36,12 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]
 
+[tool.ruff.lint.per-file-ignores]
+"examples/**" = ["E501", "SIM117"]  # nested `with` is the idiom; code is embedded in docs
+"tests/**" = ["SIM117"]
+
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
 include = ["src", "tests", "examples"]
+extraPaths = ["examples"]
