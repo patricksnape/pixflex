@@ -5,3 +5,4 @@ dist/
 *.mp4
 *.gif
 out/
+uv.lock
