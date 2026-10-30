@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pixflex"
+version = "0.1.0.dev0"
+description = "Flexbox layout for image arrays: solve a layout with Yoga, then place numpy/torch/... content into it"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = ["yogalayout", "array-api-compat>=1.9"]
+classifiers = ["Typing :: Typed"]
+
+[project.optional-dependencies]
+numpy = ["numpy>=1.26"]
+torch = ["torch"]
+resize = ["pillow", "opencv-python-headless"]
+
+[dependency-groups]
+dev = ["pytest>=8", "pyright", "ruff", "numpy>=1.26", "pillow", "imageio", "av"]
+
+[tool.uv.sources]
+yogalayout = { path = "../yogalayout", editable = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pixflex"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+include = ["src", "tests", "examples"]
