@@ -21,6 +21,26 @@ plan[plot].hw  # (600, 318): render your plot at exactly this size
 img = plan.compose({title: t, video: frame, plot: p, footer: f})  # one allocation
 ```
 
+## Gallery
+
+Every image here was produced by pixflex itself (Yoga solves the layout, arrays are composed
+into one buffer). [**See the full gallery with code →**](docs/GALLERY.md)
+
+<table>
+<tr>
+<td><a href="docs/GALLERY.md#the-yogalayoutdev-homepage-layout"><img src="docs/gallery/homepage.png" width="400" alt="The Yoga homepage layout, solved and filled"></a></td>
+<td><a href="docs/GALLERY.md#justified-rows-flickr-style"><img src="docs/gallery/justified.png" width="480" alt="Justified photo rows"></a></td>
+</tr>
+<tr>
+<td><a href="docs/GALLERY.md#contact-sheet-with-captions"><img src="docs/gallery/contact_sheet.png" width="400" alt="Contact sheet"></a></td>
+<td><a href="docs/GALLERY.md#torch-feature-maps"><img src="docs/gallery/feature_maps.png" width="480" alt="Torch feature maps"></a></td>
+</tr>
+</table>
+
+Also: photo collage, before/after, one layout at three widths, and recreations of the Yoga docs'
+`justify-content`, `align-items`, `flex-direction`, `flex-wrap`, `gap`, `position: absolute`
+and sizing playgrounds.
+
 ## Concepts
 
 - **Declare** with `Column`/`Row`/`Box` (containers, usable as `with` blocks or with
@@ -34,6 +54,11 @@ img = plan.compose({title: t, video: frame, plot: p, footer: f})  # one allocati
   `ShapeMismatch` instead of resizing). `align` follows `object-position`
   (`"top left"`, or an `(x, y)` fraction pair).
 - **Writes never change the layout and never leave their slot's rectangle.**
+- **Stacking follows tree order** (CSS painter's algorithm): later nodes draw on top of earlier
+  ones, whatever order you write content in. A slot absolutely positioned over another (a logo
+  over a video) is redrawn automatically, clipped to the overlap, whenever the slot below is
+  rewritten. (Pixels of overlaying slots are kept for this; mutate your array in place and the
+  next redraw shows the new data.)
 
 ## Addressing slots
 
