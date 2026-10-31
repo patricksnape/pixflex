@@ -112,9 +112,13 @@ your own with `pixflex.register_resizer("numpy", fn)`. **Not yet supported:** im
 ## Development
 
 ```
+git clone --recurse-submodules https://github.com/patricksnape/yogalayout   # next to this repo
 uv venv && uv sync          # yogalayout is taken from ../yogalayout (see pyproject)
 .venv/bin/python -m pytest
 python examples/video_overlay.py    # writes out/video_overlay.mp4
 ```
+
+Neither package is on PyPI yet. See [`docs/HANDOVER.md`](docs/HANDOVER.md) for the design, status
+and next steps.
 
 MIT licensed.
