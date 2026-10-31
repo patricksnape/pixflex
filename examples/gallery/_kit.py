@@ -57,8 +57,8 @@ def draw_plan(plan: Plan[Any], scale: int = 2, size: int = 18) -> np.ndarray:
 
 
 def photo(h: int, w: int, seed: int, caption: bool = True) -> np.ndarray:
-    """A procedural 'photograph' (soft colour blobs) with a frame in a dark shade of its own colours and its
-    own size printed on it, so crops, letterboxing and resizes are easy to see."""
+    """A procedural 'photograph' (soft colour blobs) with its own size printed on it,
+    so crops, letterboxing and resizes are easy to see."""
     rng = np.random.default_rng(seed)
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     yy, xx = yy / h, xx / w
@@ -75,9 +75,6 @@ def photo(h: int, w: int, seed: int, caption: bool = True) -> np.ndarray:
         img += blob[..., None] * rng.uniform(-0.5, 0.6, 3)
     out = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8))
     d = ImageDraw.Draw(out)
-    # a dark tone of the image's mean colour: visible on light and dark backgrounds alike
-    frame = tuple(int(c * 0.35) for c in img.reshape(-1, 3).mean(0).clip(0, 1) * 255)
-    d.rectangle((0, 0, w - 1, h - 1), outline=frame, width=max(2, min(h, w) // 60))
     if caption:
         d.text((w / 2, h / 2), f"{w}x{h}", font=font(max(10, min(h, w) // 7)), fill=(255, 255, 255),
                anchor="mm", stroke_width=2, stroke_fill=(0, 0, 0))  # fmt: skip
