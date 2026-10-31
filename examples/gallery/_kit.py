@@ -76,7 +76,10 @@ def photo(h: int, w: int, seed: int, caption: bool = True) -> np.ndarray:
     out = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8))
     d = ImageDraw.Draw(out)
     b = max(2, min(h, w) // 60)
-    d.rectangle((0, 0, w - 1, h - 1), outline=(255, 255, 255), width=b)
+    k = max(1, b // 2)  # thin dark outer edge so the white frame stays visible on light backgrounds
+    d.rectangle((0, 0, w - 1, h - 1), outline=(20, 20, 24), width=k)
+    if min(h, w) > 2 * k + 2:
+        d.rectangle((k, k, w - 1 - k, h - 1 - k), outline=(255, 255, 255), width=max(1, b - k))
     if caption:
         d.text((w / 2, h / 2), f"{w}x{h}", font=font(max(10, min(h, w) // 7)), fill=(255, 255, 255),
                anchor="mm", stroke_width=2, stroke_fill=(0, 0, 0))  # fmt: skip
