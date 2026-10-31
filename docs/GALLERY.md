@@ -6,7 +6,7 @@ Every image below is produced by pixflex itself: layouts are solved by Yoga, the
 
 ### The yogalayout.dev homepage layout
 
-The layout from the Yoga homepage, solved once and drawn as a diagram (left), then filled with images (right). `a` is `cover` (cropped), `b` is `contain` (letterboxed), the icon bar is absolutely positioned.
+The layout from the Yoga homepage, solved once and drawn as a diagram (left), then filled with images (right). `a` is `cover` (cropped), `b` is `contain` (letterboxed, aligned to the top), the icon bar is absolutely positioned and covers the bottom of `b` exactly as in the diagram: the slot extends under the bar, so a centred image would look shifted up or down.
 
 ![The yogalayout.dev homepage layout](gallery/homepage.png)
 
@@ -19,7 +19,7 @@ def phone(u: int) -> Box:
         with Column(flex=1, row_gap=10 * u):
             Slot(key="header", height=60 * u)
             Slot(key="a", flex=1, margin_inline=10 * u, fit="cover")
-            Slot(key="b", flex=2, margin_inline=10 * u, fit="contain", background=(0, 0, 0))
+            Slot(key="b", flex=2, margin_inline=10 * u, fit="contain", align="top", background=(0, 0, 0))
             with Row(position="absolute", width="100%", bottom=0, height=64 * u, align_items="center",
                      justify_content="space-around", background=(70, 70, 76)):  # fmt: skip
                 for i in range(1, 5):
