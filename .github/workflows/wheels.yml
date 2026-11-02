@@ -1,4 +1,4 @@
-name: Release
+name: Wheels
 
 # Builds the sdist + wheel on every PR, manual run and version tag. Publishing uses PyPI trusted
 # publishing (OIDC, no tokens) and uploads PEP 740 attestations automatically.
