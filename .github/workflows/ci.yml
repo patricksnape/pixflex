@@ -18,7 +18,6 @@ jobs:
       - run: uv sync --python ${{ matrix.python }} --group dev
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      - run: uv run pyright
       - run: uv run pytest -q   # torch tests and the gallery smoke test skip themselves here
 
   torch:
@@ -27,7 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv sync --python 3.12 --group dev
+      - run: uv sync --python 3.12 --group dev --group examples
       # after `uv sync`, which would otherwise remove it
       - run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: uv run --no-sync pyright     # needs torch and imageio to resolve every import
       - run: uv run --no-sync pytest -q   # runs every test on numpy and torch, plus the gallery
