@@ -30,7 +30,7 @@ jobs:
       - name: Smoke-test the wheel in a clean environment
         run: |
           uv venv --python 3.12 /tmp/smoke
-          uv pip install --python /tmp/smoke dist/*.whl numpy
+          uv pip install --python /tmp/smoke dist/*.whl numpy pillow  # pillow: resizer for the contain fit
           cd /tmp && /tmp/smoke/bin/python - <<'PY'
           import numpy as np
           from pixflex import Column, Row, Slot
