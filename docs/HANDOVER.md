@@ -37,13 +37,12 @@ possible. Pure Python, MIT, depends on `yogalayout` and `array-api-compat`.
 
 ## Dev setup
 ```
-uv venv --python 3.14 && uv pip install --python .venv -e ../yogalayout -e . pytest pyright ruff numpy pillow imageio av
+uv venv --python 3.14 && uv pip install --python .venv -e . pytest pyright ruff numpy pillow imageio av   # yogalayout comes from PyPI
 uv pip install --python .venv torch --index-url https://download.pytorch.org/whl/cpu   # for torch tests/gallery
 .venv/bin/python -m pytest -q    # 102 tests
 ```
 **Do not run `uv sync`** in a venv with manually installed CPU torch: it removes it. `uv.lock` is
-gitignored. `pyproject.toml` points `yogalayout` at `../yogalayout` (editable path source), so clone
-both repos side by side until `yogalayout` is on PyPI.
+gitignored. `yogalayout>=0.1` is a normal PyPI dependency (released 2026-11-02).
 
 ## Known limits
 - JAX and cupy are **untested/unsupported** (README says so); the write shim for immutable arrays
@@ -54,9 +53,24 @@ both repos side by side until `yogalayout` is on PyPI.
 - The gallery smoke test is slow (~30 s); consider marking it `slow`.
 - `ruff format --check examples` flags one file (not looked at).
 
+## CI and release (set up 2026-11-03)
+- `.github/workflows/ci.yml`: ruff + pytest on ubuntu/macos/windows x 3.10/3.14; a CPU-torch job runs
+  pyright (needs torch + imageio to resolve imports) and every test on numpy and torch. All green.
+- `.github/workflows/wheels.yml` (same name as yogalayout's, so the trusted-publisher settings match):
+  builds sdist + wheel, `twine check`, smoke-tests the wheel in a clean venv (installs Pillow: the
+  `contain` fit needs a resizer). Tag `vX.Y.Z` (must equal `pyproject.toml` version) publishes to
+  PyPI (environment `pypi`); manual run with `publish: testpypi` publishes to TestPyPI. Both
+  environments have required reviewers: approve the deployment in the Actions run.
+- Trusted publisher fields (pypi.org and test.pypi.org): owner `patricksnape`, repo `pixflex`,
+  workflow `wheels.yml`, environment `pypi` / `testpypi`. A mismatch gives `invalid-publisher`
+  (our first TestPyPI attempt failed because the workflow was named `release.yml`).
+- TestPyPI dry run done (`0.1.0.dev0`): installs with `--extra-index-url` for yogalayout and ran on
+  3.14 and 3.14t. **`0.1.0.dev0` is used up on TestPyPI.**
+- **Not yet released to PyPI.** To release: set `version = "0.1.0"`, push, `git tag -a v0.1.0 -m ...`
+  (tags are signed by default in the user's git config), push the tag, approve `pypi`.
+
 ## Next steps (priority order)
-1. Release plumbing (see yogalayout handover): wheels, PyPI names, then switch the `yogalayout`
-   source from the path to the PyPI dependency and add CI for this repo.
+1. Release `pixflex` 0.1.0 to PyPI (above), then add an Install section to the README.
 2. `T`-axis clips on tensor backends are implemented; benchmark the batched torch path on GPU.
 3. `plan.resolve()/diff()/relayout()` for changing layouts mid-video.
 4. JAX (`.at[].set`) and cupy backends with tests.
