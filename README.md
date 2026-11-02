@@ -21,6 +21,14 @@ plan[plot].hw  # (600, 318): render your plot at exactly this size
 img = plan.compose({title: t, video: frame, plot: p, footer: f})  # one allocation
 ```
 
+## Install
+
+```
+pip install pixflex                 # numpy arrays; resizing needs one of the extras below
+pip install "pixflex[numpy,resize]"  # numpy + Pillow/OpenCV resizers
+pip install torch                   # torch tensors need no extra
+```
+
 ## Gallery
 
 Every image here was produced by pixflex itself (Yoga solves the layout, arrays are composed

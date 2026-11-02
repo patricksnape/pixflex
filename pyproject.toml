@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pixflex"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Flexbox layout for image arrays: solve a layout with Yoga, then place numpy/torch/... content into it"
 readme = "README.md"
 license = "MIT"

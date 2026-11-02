@@ -66,11 +66,11 @@ gitignored. `yogalayout>=0.1` is a normal PyPI dependency (released 2026-11-02).
   (our first TestPyPI attempt failed because the workflow was named `release.yml`).
 - TestPyPI dry run done (`0.1.0.dev0`): installs with `--extra-index-url` for yogalayout and ran on
   3.14 and 3.14t. **`0.1.0.dev0` is used up on TestPyPI.**
-- **Not yet released to PyPI.** To release: set `version = "0.1.0"`, push, `git tag -a v0.1.0 -m ...`
+- **Released 0.1.0 to PyPI (2026-11-03).** Procedure for later versions: set `version = "0.1.0"`, push, `git tag -a v0.1.0 -m ...`
   (tags are signed by default in the user's git config), push the tag, approve `pypi`.
 
 ## Next steps (priority order)
-1. Release `pixflex` 0.1.0 to PyPI (above), then add an Install section to the README.
+1. ~~Release 0.1.0~~ done 2026-11-03 (see "CI and release").
 2. `T`-axis clips on tensor backends are implemented; benchmark the batched torch path on GPU.
 3. `plan.resolve()/diff()/relayout()` for changing layouts mid-video.
 4. JAX (`.at[].set`) and cupy backends with tests.
