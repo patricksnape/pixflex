@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
-dependencies = ["yogalayout", "array-api-compat>=1.9"]
+dependencies = ["yogalayout>=0.1", "array-api-compat>=1.9"]
 classifiers = ["Typing :: Typed"]
 
 [project.optional-dependencies]
@@ -19,10 +19,8 @@ torch = ["torch"]
 resize = ["pillow", "opencv-python-headless"]
 
 [dependency-groups]
-dev = ["pytest>=8", "pyright", "ruff", "numpy>=1.26", "pillow", "imageio", "av"]
-
-[tool.uv.sources]
-yogalayout = { path = "../yogalayout", editable = true }
+dev = ["pytest>=8", "pyright", "ruff", "numpy>=1.26", "pillow"]
+examples = ["imageio", "av"]  # examples/video_overlay.py
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pixflex"]
